@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { ProductImageWrapper } from "../atoms/ProductImageWrapper";
 import { type VariantDetailsFragment } from "@/gql/graphql";
 
@@ -8,6 +11,8 @@ interface ProductImageGalleryProps {
 }
 
 export function ProductImageGallery({ variants, selectedVariant, productMedia }: ProductImageGalleryProps) {
+	const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
 	// Get all unique images from variants and product media
 	const allImages = new Map<string, { url: string; alt: string }>();
 
@@ -58,23 +63,50 @@ export function ProductImageGallery({ variants, selectedVariant, productMedia }:
 	// If no filtered images, show all images
 	const displayImages = filteredImages.length > 0 ? filteredImages : Array.from(allImages.values());
 
+	// Reset selected image when variant changes
+	useEffect(() => {
+		setSelectedImageIndex(0);
+	}, [selectedVariant]);
+
 	if (displayImages.length === 0) {
 		return null;
 	}
 
+	const currentImage = displayImages[selectedImageIndex];
+
 	return (
 		<div className="space-y-4">
-			{displayImages.map((image, index) => (
-				<div key={`${image.url}-${index}`} className="aspect-square">
-					<ProductImageWrapper
-						priority={index === 0}
-						alt={image.alt}
-						width={1024}
-						height={1024}
-						src={image.url}
-					/>
+			{/* Main image */}
+			<div className="aspect-square">
+				<ProductImageWrapper
+					priority={selectedImageIndex === 0}
+					alt={currentImage.alt}
+					width={1024}
+					height={1024}
+					src={currentImage.url}
+				/>
+			</div>
+
+			{/* Thumbnail navigation */}
+			{displayImages.length > 1 && (
+				<div className="grid grid-cols-4 gap-2">
+					{displayImages.map((image, index) => (
+						<button
+							key={`${image.url}-${index}`}
+							type="button"
+							onClick={() => setSelectedImageIndex(index)}
+							className={`aspect-square overflow-hidden rounded border-2 transition-colors ${
+								selectedImageIndex === index
+									? "border-neutral-900"
+									: "border-neutral-200 hover:border-neutral-400"
+							}`}
+							aria-label={`View image ${index + 1}`}
+						>
+							<img src={image.url} alt={image.alt} className="h-full w-full object-cover" loading="lazy" />
+						</button>
+					))}
 				</div>
-			))}
+			)}
 		</div>
 	);
 }
