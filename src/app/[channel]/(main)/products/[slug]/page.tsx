@@ -7,7 +7,7 @@ import { invariant } from "ts-invariant";
 import { type WithContext, type Product } from "schema-dts";
 import { AddButton } from "./AddButton";
 import { VariantSelector } from "@/ui/components/VariantSelector";
-import { ProductImageWrapper } from "@/ui/atoms/ProductImageWrapper";
+import { ProductImageGallery } from "@/ui/components/ProductImageGallery";
 import { executeGraphQL } from "@/lib/graphql";
 import { formatMoney, formatMoneyRange } from "@/lib/utils";
 import { CheckoutAddLineDocument, ProductDetailsDocument, ProductListDocument } from "@/gql/graphql";
@@ -90,7 +90,6 @@ export default async function Page(props: {
 		notFound();
 	}
 
-	const firstImage = product.thumbnail;
 	const description = product?.description ? parser.parse(JSON.parse(product?.description)) : null;
 
 	const variants = product.variants;
@@ -178,15 +177,11 @@ export default async function Page(props: {
 			/>
 			<form className="grid gap-2 sm:grid-cols-2 lg:grid-cols-8" action={addItem}>
 				<div className="md:col-span-1 lg:col-span-5">
-					{firstImage && (
-						<ProductImageWrapper
-							priority={true}
-							alt={firstImage.alt ?? ""}
-							width={1024}
-							height={1024}
-							src={firstImage.url}
-						/>
-					)}
+					<ProductImageGallery
+						variants={variants || []}
+						selectedVariant={selectedVariant}
+						productMedia={product.media}
+					/>
 				</div>
 				<div className="flex flex-col pt-6 sm:col-span-1 sm:px-6 sm:pt-0 lg:col-span-3 lg:pt-16">
 					<div>
@@ -196,6 +191,11 @@ export default async function Page(props: {
 						<p className="mb-8 text-sm " data-testid="ProductElement_Price">
 							{price}
 						</p>
+						{selectedVariant?.sku && (
+							<p className="mb-4 text-xs text-neutral-500" data-testid="ProductElement_SKU">
+								SKU: {selectedVariant.sku}
+							</p>
+						)}
 
 						{variants && (
 							<VariantSelector
